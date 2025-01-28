@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'views/calculator_view.dart';
 import 'views/pdf_form_view.dart';
 import 'views/invoice_list_view.dart';
@@ -27,8 +28,281 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         useMaterial3: true,
       ),
-      home: const MainScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _animationController.forward();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) =>
+          isFirstLaunch ? const OnboardingScreen() : const MainScreen(),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: FadeTransition(
+          opacity: _animation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logo.png',
+                width: 150,
+                height: 150,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Total Torque\nAccounting',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: TorqueColors.primaryRed,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
+  bool _isLastPage = false;
+
+  final List<OnboardingPage> _pages = [
+    OnboardingPage(
+      title: 'Torque Calculator',
+      description:
+      'Calculate torque values quickly and accurately with our built-in calculator.',
+      icon: Icons.build_rounded,
+      color: TorqueColors.primaryRed,
+    ),
+    OnboardingPage(
+      title: 'Invoice Generation',
+      description:
+      'Create professional invoices with our easy-to-use form and PDF generation.',
+      icon: Icons.post_add_rounded,
+      color: TorqueColors.primaryRed,
+    ),
+    OnboardingPage(
+      title: 'Engineering Assistant',
+      description:
+      'Get help with calculations and technical queries from our AI assistant.',
+      icon: Icons.engineering_rounded,
+      color: TorqueColors.primaryRed,
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstLaunch', false);
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: _pages.length,
+            onPageChanged: (index) {
+              setState(() {
+                _isLastPage = index == _pages.length - 1;
+              });
+            },
+            itemBuilder: (context, index) {
+              final page = _pages[index];
+              return OnboardingPageWidget(page: page);
+            },
+          ),
+          Container(
+            alignment: const Alignment(0, 0.75),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _pages.length,
+                        (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _pageController.hasClients &&
+                            _pageController.page?.round() == index
+                            ? TorqueColors.primaryRed
+                            : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                if (_isLastPage)
+                  ElevatedButton(
+                    onPressed: _completeOnboarding,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: TorqueColors.primaryRed,
+                    ),
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            alignment: const Alignment(0.9, 0.9),
+            child: TextButton(
+              onPressed: _completeOnboarding,
+              child: const Text(
+                'Skip',
+                style: TextStyle(color: TorqueColors.primaryRed),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class OnboardingPage {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+
+  OnboardingPage({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class OnboardingPageWidget extends StatelessWidget {
+  final OnboardingPage page;
+
+  const OnboardingPageWidget({
+    super.key,
+    required this.page,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            page.icon,
+            size: 100,
+            color: page.color,
+          ),
+          const SizedBox(height: 32),
+          Text(
+            page.title,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            page.description,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -125,8 +399,8 @@ class CustomBottomNavBar extends StatelessWidget {
           _buildNavItem(
               0,
               selectedIndex == 0
-                  ? Icons.architecture_rounded
-                  : Icons.architecture_outlined,
+                  ? Icons.build_rounded
+                  : Icons.build_outlined,
               'Torque Calc'
           ),
           _buildNavItem(
@@ -146,8 +420,8 @@ class CustomBottomNavBar extends StatelessWidget {
           _buildNavItem(
               3,
               selectedIndex == 3
-                  ? Icons.support_agent_rounded
-                  : Icons.support_agent_outlined,
+                  ? Icons.engineering_rounded
+                  : Icons.engineering_outlined,
               'Assistant'
           ),
         ],
@@ -208,4 +482,3 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 }
-
