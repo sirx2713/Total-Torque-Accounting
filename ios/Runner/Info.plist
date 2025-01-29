@@ -45,5 +45,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Add purpose strings for sensitive APIs -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to upload photos for invoices and other features.</string>
+
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to your camera to take photos for invoices, profile pictures, or attachments.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to your microphone for voice input in the chat assistant or other features.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app requires access to your location to provide location-based services like tracking invoices or clients.</string>
+
+	<key>NSContactsUsageDescription</key>
+	<string>This app requires access to your contacts to autofill client information in invoices.</string>
 </dict>
 </plist>
