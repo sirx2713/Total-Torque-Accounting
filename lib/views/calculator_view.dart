@@ -9,7 +9,7 @@ class CalculatorView extends StatefulWidget {
 }
 
 class _CalculatorViewState extends State<CalculatorView>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   String _output = '0';
   String _input = '';
   double _num1 = 0;
@@ -39,12 +39,14 @@ class _CalculatorViewState extends State<CalculatorView>
 
     setState(() {
       if (buttonText == 'C') {
+        // Reset the calculator
         _output = '0';
         _input = '';
         _num1 = 0;
         _operand = '';
         _newNumber = true;
       } else if (buttonText == '⌫') {
+        // Backspace
         if (_output.length > 1) {
           _output = _output.substring(0, _output.length - 1);
         } else {
@@ -52,23 +54,27 @@ class _CalculatorViewState extends State<CalculatorView>
           _newNumber = true;
         }
       } else if (buttonText == '+/-') {
+        // Toggle positive/negative
         if (_output.startsWith('-')) {
           _output = _output.substring(1);
         } else {
           _output = '-$_output';
         }
       } else if (buttonText == '%') {
+        // Percentage
         double num = double.parse(_output);
         _output = (num / 100).toString();
       } else if (buttonText == '+' ||
           buttonText == '-' ||
           buttonText == '×' ||
           buttonText == '÷') {
+        // Save the first operand and operation
         _num1 = double.parse(_output);
         _operand = buttonText;
         _newNumber = true;
         _history.add(_output + ' ' + buttonText);
       } else if (buttonText == '=') {
+        // Perform the calculation
         double num2 = double.parse(_output);
         _history.add(_output);
 
@@ -89,6 +95,7 @@ class _CalculatorViewState extends State<CalculatorView>
         _history.add('= $_output');
         _newNumber = true;
       } else {
+        // Update the current number
         if (_newNumber) {
           _output = buttonText;
           _newNumber = false;
@@ -99,11 +106,12 @@ class _CalculatorViewState extends State<CalculatorView>
     });
   }
 
-  Widget _buildButton(String buttonText, {
-    Color? backgroundColor,
-    Color? textColor,
-    double? fontSize,
-  }) {
+  Widget _buildButton(
+      String buttonText, {
+        Color? backgroundColor,
+        Color? textColor,
+        double? fontSize,
+      }) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -139,6 +147,7 @@ class _CalculatorViewState extends State<CalculatorView>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Column(
       children: [
         // History View
@@ -193,16 +202,16 @@ class _CalculatorViewState extends State<CalculatorView>
                 Expanded(
                   child: Row(
                     children: [
-                      Expanded(child: _buildButton('C',
-                        backgroundColor: Colors.red[100],
-                        textColor: Colors.red,
-                      )),
+                      Expanded(
+                          child: _buildButton('C',
+                              backgroundColor: Colors.red[100],
+                              textColor: Colors.red)),
                       Expanded(child: _buildButton('⌫')),
                       Expanded(child: _buildButton('%')),
-                      Expanded(child: _buildButton('÷',
-                        backgroundColor: Colors.blue[100],
-                        textColor: Colors.blue,
-                      )),
+                      Expanded(
+                          child: _buildButton('÷',
+                              backgroundColor: Colors.blue[100],
+                              textColor: Colors.blue)),
                     ],
                   ),
                 ),
@@ -212,10 +221,10 @@ class _CalculatorViewState extends State<CalculatorView>
                       Expanded(child: _buildButton('7')),
                       Expanded(child: _buildButton('8')),
                       Expanded(child: _buildButton('9')),
-                      Expanded(child: _buildButton('×',
-                        backgroundColor: Colors.blue[100],
-                        textColor: Colors.blue,
-                      )),
+                      Expanded(
+                          child: _buildButton('×',
+                              backgroundColor: Colors.blue[100],
+                              textColor: Colors.blue)),
                     ],
                   ),
                 ),
@@ -225,10 +234,10 @@ class _CalculatorViewState extends State<CalculatorView>
                       Expanded(child: _buildButton('4')),
                       Expanded(child: _buildButton('5')),
                       Expanded(child: _buildButton('6')),
-                      Expanded(child: _buildButton('-',
-                        backgroundColor: Colors.blue[100],
-                        textColor: Colors.blue,
-                      )),
+                      Expanded(
+                          child: _buildButton('-',
+                              backgroundColor: Colors.blue[100],
+                              textColor: Colors.blue)),
                     ],
                   ),
                 ),
@@ -238,10 +247,10 @@ class _CalculatorViewState extends State<CalculatorView>
                       Expanded(child: _buildButton('1')),
                       Expanded(child: _buildButton('2')),
                       Expanded(child: _buildButton('3')),
-                      Expanded(child: _buildButton('+',
-                        backgroundColor: Colors.blue[100],
-                        textColor: Colors.blue,
-                      )),
+                      Expanded(
+                          child: _buildButton('+',
+                              backgroundColor: Colors.blue[100],
+                              textColor: Colors.blue)),
                     ],
                   ),
                 ),
@@ -251,10 +260,10 @@ class _CalculatorViewState extends State<CalculatorView>
                       Expanded(child: _buildButton('+/-')),
                       Expanded(child: _buildButton('0')),
                       Expanded(child: _buildButton('.')),
-                      Expanded(child: _buildButton('=',
-                        backgroundColor: Colors.blue,
-                        textColor: Colors.white,
-                      )),
+                      Expanded(
+                          child: _buildButton('=',
+                              backgroundColor: Colors.blue,
+                              textColor: Colors.white)),
                     ],
                   ),
                 ),
@@ -265,4 +274,7 @@ class _CalculatorViewState extends State<CalculatorView>
       ],
     );
   }
+
+  @override
+  bool get wantKeepAlive => true; // Ensures state persistence
 }

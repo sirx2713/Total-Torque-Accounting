@@ -7,77 +7,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:signature/signature.dart';
 
-class SignaturePad extends StatefulWidget {
-  final Function(Uint8List) onSignatureCapture;
-
-  const SignaturePad({
-    super.key,
-    required this.onSignatureCapture,
-  });
-
-  @override
-  State<SignaturePad> createState() => _SignaturePadState();
-}
-
-class _SignaturePadState extends State<SignaturePad> {
-  final SignatureController _controller = SignatureController(
-    penStrokeWidth: 3,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Signature(
-            controller: _controller,
-            backgroundColor: Colors.white,
-            height: 150,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            TextButton.icon(
-              onPressed: () {
-                _controller.clear();
-              },
-              icon: const Icon(Icons.clear),
-              label: const Text('Clear'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                if (_controller.isNotEmpty) {
-                  final signature = await _controller.toPngBytes();
-                  if (signature != null) {
-                    widget.onSignatureCapture(signature);
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              icon: const Icon(Icons.check),
-              label: const Text('Save Signature'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
 class PdfFormView extends StatefulWidget {
   const PdfFormView({super.key});
 
@@ -85,7 +14,8 @@ class PdfFormView extends StatefulWidget {
   State<PdfFormView> createState() => _PdfFormViewState();
 }
 
-class _PdfFormViewState extends State<PdfFormView> {
+class _PdfFormViewState extends State<PdfFormView>
+    with AutomaticKeepAliveClientMixin {
   final _formKey = GlobalKey<FormState>();
   final _pdfService = PdfService();
   Uint8List? _signature;
@@ -105,6 +35,9 @@ class _PdfFormViewState extends State<PdfFormView> {
   final _accountNumberController = TextEditingController();
   final _bankNameController = TextEditingController();
 
+  // Controller for authorized signature name
+  final _authorizedNameController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -117,7 +50,8 @@ class _PdfFormViewState extends State<PdfFormView> {
     _accountNumberController.text = '11990144941';
 
     // Generate invoice number
-    _invoiceNumberController.text = 'INV${DateTime.now().millisecondsSinceEpoch.toString().substring(0, 8)}';
+    _invoiceNumberController.text =
+    'INV${DateTime.now().millisecondsSinceEpoch.toString().substring(0, 8)}';
   }
 
   @override
@@ -128,6 +62,7 @@ class _PdfFormViewState extends State<PdfFormView> {
     _accountNameController.dispose();
     _accountNumberController.dispose();
     _bankNameController.dispose();
+    _authorizedNameController.dispose();
     for (var item in _items) {
       item.dispose();
     }
@@ -213,8 +148,13 @@ class _PdfFormViewState extends State<PdfFormView> {
       _items.removeAt(index);
     });
   }
+
+  @override
+  bool get wantKeepAlive => true; // Ensures state persistence
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -284,7 +224,8 @@ class _PdfFormViewState extends State<PdfFormView> {
                                 border: OutlineInputBorder(),
                               ),
                               child: Text(
-                                DateFormat('dd MMM yyyy').format(_selectedDate),
+                                DateFormat('dd MMM yyyy')
+                                    .format(_selectedDate),
                               ),
                             ),
                           ),
@@ -354,29 +295,36 @@ class _PdfFormViewState extends State<PdfFormView> {
                                     Expanded(
                                       flex: 3,
                                       child: TextFormField(
-                                        controller: _items[index].productController,
+                                        controller:
+                                        _items[index].productController,
                                         decoration: const InputDecoration(
                                           labelText: 'Product',
                                           border: OutlineInputBorder(),
                                         ),
                                         validator: (value) =>
-                                        value?.isEmpty ?? true ? 'Required' : null,
+                                        value?.isEmpty ?? true
+                                            ? 'Required'
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: TextFormField(
-                                        controller: _items[index].quantityController,
+                                        controller:
+                                        _items[index].quantityController,
                                         decoration: const InputDecoration(
                                           labelText: 'Qty',
                                           border: OutlineInputBorder(),
                                         ),
                                         keyboardType: TextInputType.number,
                                         inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly,
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
                                         ],
                                         validator: (value) =>
-                                        value?.isEmpty ?? true ? 'Required' : null,
+                                        value?.isEmpty ?? true
+                                            ? 'Required'
+                                            : null,
                                         onChanged: (value) {
                                           setState(() {}); // Update calculations
                                         },
@@ -385,17 +333,22 @@ class _PdfFormViewState extends State<PdfFormView> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: TextFormField(
-                                        controller: _items[index].rateController,
+                                        controller:
+                                        _items[index].rateController,
                                         decoration: const InputDecoration(
                                           labelText: 'Rate',
                                           border: OutlineInputBorder(),
                                         ),
-                                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                        keyboardType: TextInputType.numberWithOptions(
+                                            decimal: true),
                                         inputFormatters: [
-                                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                          FilteringTextInputFormatter.allow(
+                                              RegExp(r'^\d*\.?\d*')),
                                         ],
                                         validator: (value) =>
-                                        value?.isEmpty ?? true ? 'Required' : null,
+                                        value?.isEmpty ?? true
+                                            ? 'Required'
+                                            : null,
                                         onChanged: (value) {
                                           setState(() {}); // Update calculations
                                         },
@@ -403,7 +356,9 @@ class _PdfFormViewState extends State<PdfFormView> {
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete),
-                                      onPressed: _items.length > 1 ? () => _removeItem(index) : null,
+                                      onPressed: _items.length > 1
+                                          ? () => _removeItem(index)
+                                          : null,
                                       color: Colors.red,
                                     ),
                                   ],
@@ -428,6 +383,9 @@ class _PdfFormViewState extends State<PdfFormView> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 16),
+
             // Payment Details Section
             Card(
               elevation: 4,
@@ -559,11 +517,21 @@ class _PdfFormViewState extends State<PdfFormView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Signature',
+                      'Authorized Signature',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _authorizedNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Authorized Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                      value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     Center(
@@ -620,7 +588,8 @@ class _PdfFormViewState extends State<PdfFormView> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Missing Signature'),
-                        content: const Text('Please add your signature before generating the invoice.'),
+                        content: const Text(
+                            'Please add your signature before generating the invoice.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -648,7 +617,8 @@ class _PdfFormViewState extends State<PdfFormView> {
                     List<Map<String, dynamic>> items = _items.map((item) {
                       return {
                         'product': item.productController.text,
-                        'quantity': int.tryParse(item.quantityController.text) ?? 0,
+                        'quantity':
+                        int.tryParse(item.quantityController.text) ?? 0,
                         'rate': double.tryParse(item.rateController.text) ?? 0,
                         'amount': _calculateItemAmount(item),
                       };
@@ -667,6 +637,7 @@ class _PdfFormViewState extends State<PdfFormView> {
                       accountNumber: _accountNumberController.text,
                       amount: _calculateTotal(),
                       signature: _signature,
+                      authorizedName: _authorizedNameController.text,
                     );
 
                     // Remove loading indicator
@@ -738,7 +709,8 @@ class _PdfFormViewState extends State<PdfFormView> {
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text('Validation Error'),
-                        content: const Text('Please fill in all required fields.'),
+                        content: const Text(
+                            'Please fill in all required fields.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -775,6 +747,7 @@ class _PdfFormViewState extends State<PdfFormView> {
     );
   }
 }
+
 class InvoiceItem {
   final TextEditingController productController = TextEditingController();
   final TextEditingController quantityController = TextEditingController();
@@ -784,5 +757,77 @@ class InvoiceItem {
     productController.dispose();
     quantityController.dispose();
     rateController.dispose();
+  }
+}
+
+class SignaturePad extends StatefulWidget {
+  final Function(Uint8List) onSignatureCapture;
+
+  const SignaturePad({
+    super.key,
+    required this.onSignatureCapture,
+  });
+
+  @override
+  State<SignaturePad> createState() => _SignaturePadState();
+}
+
+class _SignaturePadState extends State<SignaturePad> {
+  final SignatureController _controller = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Signature(
+            controller: _controller,
+            backgroundColor: Colors.white,
+            height: 150,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                _controller.clear();
+              },
+              icon: const Icon(Icons.clear),
+              label: const Text('Clear'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (_controller.isNotEmpty) {
+                  final signature = await _controller.toPngBytes();
+                  if (signature != null) {
+                    widget.onSignatureCapture(signature);
+                    Navigator.pop(context);
+                  }
+                }
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Save Signature'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

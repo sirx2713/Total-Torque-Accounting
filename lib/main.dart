@@ -5,12 +5,10 @@ import 'views/pdf_form_view.dart';
 import 'views/invoice_list_view.dart';
 import 'views/chatbot_view.dart';
 
-
 void main() {
   runApp(const MyApp());
 }
 
-// Define brand colors based on the logo
 class TorqueColors {
   static const Color primaryRed = Color(0xFFFF0000);
   static const Color primaryBlue = Color(0xFF0000FF);
@@ -319,12 +317,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const CalculatorView(),
-    const PdfFormView(),
-    const InvoiceListView(),
-    const ChatbotView(),
-  ];
+  final PageController _pageController = PageController();
 
   final List<String> _titles = [
     'Calculator',
@@ -332,6 +325,19 @@ class _MainScreenState extends State<MainScreen> {
     'Saved Invoices',
     'Chat Assistant',
   ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onTabSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.jumpToPage(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -347,9 +353,15 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _screens[_selectedIndex],
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          CalculatorView(),
+          PdfFormView(),
+          InvoiceListView(),
+          ChatbotView(),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -368,11 +380,7 @@ class _MainScreenState extends State<MainScreen> {
             height: 70,
             child: CustomBottomNavBar(
               selectedIndex: _selectedIndex,
-              onItemSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
+              onItemSelected: _onTabSelected,
             ),
           ),
         ),
@@ -403,29 +411,25 @@ class CustomBottomNavBar extends StatelessWidget {
               selectedIndex == 0
                   ? Icons.build_rounded
                   : Icons.build_outlined,
-              'Torque Calc'
-          ),
+              'Torque Calc'),
           _buildNavItem(
               1,
               selectedIndex == 1
                   ? Icons.post_add_rounded
                   : Icons.post_add_outlined,
-              'New Invoice'
-          ),
+              'New Invoice'),
           _buildNavItem(
               2,
               selectedIndex == 2
                   ? Icons.inventory_2_rounded
                   : Icons.inventory_2_outlined,
-              'Documents'
-          ),
+              'Documents'),
           _buildNavItem(
               3,
               selectedIndex == 3
                   ? Icons.engineering_rounded
                   : Icons.engineering_outlined,
-              'Assistant'
-          ),
+              'Assistant'),
         ],
       ),
     );
@@ -456,9 +460,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 turns: isSelected ? 0.05 : 0,
                 child: Icon(
                   icon,
-                  color: isSelected
-                      ? TorqueColors.primaryRed
-                      : Colors.grey,
+                  color: isSelected ? TorqueColors.primaryRed : Colors.grey,
                   size: 24,
                 ),
               ),
@@ -467,13 +469,9 @@ class CustomBottomNavBar extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                color: isSelected
-                    ? TorqueColors.primaryRed
-                    : Colors.grey,
+                color: isSelected ? TorqueColors.primaryRed : Colors.grey,
                 fontSize: isSelected ? 13 : 12,
-                fontWeight: isSelected
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 letterSpacing: isSelected ? 0.5 : 0,
               ),
               child: Text(label),
