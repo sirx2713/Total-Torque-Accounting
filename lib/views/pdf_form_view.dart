@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:total_torque_accounting/models/EditableInvoice.dart';
 import '../services/pdf_service.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
@@ -8,7 +9,9 @@ import 'dart:typed_data';
 import 'package:signature/signature.dart';
 
 class PdfFormView extends StatefulWidget {
-  const PdfFormView({super.key});
+  final EditableInvoice? editableInvoice; // Optional parameter for editing
+
+  const PdfFormView({super.key, this.editableInvoice});
 
   @override
   State<PdfFormView> createState() => _PdfFormViewState();
@@ -41,17 +44,36 @@ class _PdfFormViewState extends State<PdfFormView>
   @override
   void initState() {
     super.initState();
-    // Add initial empty item
-    _items.add(InvoiceItem());
-
-    // Set default values
-    _accountNameController.text = 'Misheck T Mukarati';
-    _bankNameController.text = 'Nedbank USD';
-    _accountNumberController.text = '11990144941';
-
-    // Generate invoice number
-    _invoiceNumberController.text =
-    'INV${DateTime.now().millisecondsSinceEpoch.toString().substring(0, 8)}';
+    // If editing an existing invoice, pre-fill fields with its data
+    if (widget.editableInvoice != null) {
+      final invoice = widget.editableInvoice!;
+      _billToController.text = invoice.companyName;
+      _invoiceNumberController.text = invoice.invoiceNumber;
+      _referenceController.text = invoice.reference;
+      _selectedDate = invoice.date;
+      _dueDate = invoice.dueDate;
+      _items = invoice.items.map((item) {
+        return InvoiceItem(
+          productController: TextEditingController(text: item.product),
+          quantityController:
+          TextEditingController(text: item.quantity.toString()),
+          rateController: TextEditingController(text: item.rate.toString()),
+        );
+      }).toList();
+      _accountNameController.text = invoice.accountName;
+      _bankNameController.text = invoice.bankName;
+      _accountNumberController.text = invoice.accountNumber;
+    } else {
+      // Add an initial item for new invoices
+      _items.add(InvoiceItem());
+      // Set default values for payment details
+      _accountNameController.text = 'Misheck T Mukarati';
+      _bankNameController.text = 'Nedbank USD';
+      _accountNumberController.text = '11990144941';
+      // Generate an invoice number for new invoices
+      _invoiceNumberController.text =
+      'INV${DateTime.now().millisecondsSinceEpoch.toString().substring(0, 8)}';
+    }
   }
 
   @override
@@ -749,9 +771,17 @@ class _PdfFormViewState extends State<PdfFormView>
 }
 
 class InvoiceItem {
-  final TextEditingController productController = TextEditingController();
-  final TextEditingController quantityController = TextEditingController();
-  final TextEditingController rateController = TextEditingController();
+  final TextEditingController productController;
+  final TextEditingController quantityController;
+  final TextEditingController rateController;
+
+  InvoiceItem({
+    TextEditingController? productController,
+    TextEditingController? quantityController,
+    TextEditingController? rateController,
+  })  : productController = productController ?? TextEditingController(),
+        quantityController = quantityController ?? TextEditingController(),
+        rateController = rateController ?? TextEditingController();
 
   void dispose() {
     productController.dispose();

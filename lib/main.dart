@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:total_torque_accounting/views/EditableInvoicesView.dart';
 import 'views/calculator_view.dart';
 import 'views/pdf_form_view.dart';
 import 'views/invoice_list_view.dart';
@@ -323,7 +324,7 @@ class _MainScreenState extends State<MainScreen> {
     'Calculator',
     'Create Invoice',
     'Saved Invoices',
-    'Chat Assistant',
+    'Edit Invoices',
   ];
 
   @override
@@ -360,7 +361,7 @@ class _MainScreenState extends State<MainScreen> {
           CalculatorView(),
           PdfFormView(),
           InvoiceListView(),
-          ChatbotView(),
+          EditableInvoicesView(),
         ],
       ),
       bottomNavigationBar: Container(
@@ -427,9 +428,9 @@ class CustomBottomNavBar extends StatelessWidget {
           _buildNavItem(
               3,
               selectedIndex == 3
-                  ? Icons.engineering_rounded
-                  : Icons.engineering_outlined,
-              'Assistant'),
+                  ? Icons.history_edu
+                  : Icons.history_edu_outlined,
+              'History'),
         ],
       ),
     );
