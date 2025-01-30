@@ -29,12 +29,12 @@ class PdfService {
 
   pw.Widget _buildWatermark(pw.MemoryImage logoImage) {
     return pw.Opacity(
-      opacity: 0.05, // Reduced opacity for a subtle watermark
+      opacity: 0.05,
       child: pw.Center(
         child: pw.Image(
           logoImage,
           fit: pw.BoxFit.contain,
-          height: 300, // Adjust the size of the watermark as needed
+          height: 300,
           width: 300,
         ),
       ),
@@ -48,12 +48,14 @@ class PdfService {
     required DateTime date,
     required DateTime dueDate,
     required List<Map<String, dynamic>> items,
+    required List<Map<String, dynamic>> paidItems,
     required String accountName,
     required String bankName,
     required String accountNumber,
     required double amount,
+    required double paidAmount,
     required Uint8List? signature,
-    required String authorizedName, // New parameter for authorized signature name
+    required String authorizedName,
   }) async {
     final pdf = pw.Document();
     final font = await _loadFont();
@@ -288,9 +290,123 @@ class PdfService {
                       ],
                     ),
 
+                    // Paid Items Section
+                    if (paidItems.isNotEmpty) ...[
+                      pw.SizedBox(height: 20),
+
+                      pw.Text(
+                        'Paid Items',
+                        style: pw.TextStyle(
+                          font: font,
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.green800,
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 10),
+
+                      pw.Table(
+                        border: pw.TableBorder.all(color: PdfColors.grey400),
+                        columnWidths: {
+                          0: const pw.FlexColumnWidth(1),
+                          1: const pw.FlexColumnWidth(4),
+                          2: const pw.FlexColumnWidth(2),
+                          3: const pw.FlexColumnWidth(2),
+                        },
+                        children: [
+                          // Paid Items Table Header
+                          pw.TableRow(
+                            decoration: pw.BoxDecoration(
+                              color: PdfColors.green100,
+                            ),
+                            children: [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(
+                                  'No',
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(
+                                  'Product',
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(
+                                  'Quantity',
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(
+                                  'Amount Paid',
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Paid Items
+                          ...paidItems.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
+                            return pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    '${index + 1}',
+                                    style: pw.TextStyle(font: font),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    item['product'],
+                                    style: pw.TextStyle(font: font),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    '${item['quantity']}',
+                                    style: pw.TextStyle(font: font),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    _formatCurrency(item['amountPaid'].toDouble()),
+                                    style: pw.TextStyle(font: font),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ],
+
                     pw.SizedBox(height: 20),
 
-                    // Total Amount
+                    // Total Amount with Paid Items
                     pw.Container(
                       alignment: pw.Alignment.centerRight,
                       child: pw.Column(
@@ -300,7 +416,7 @@ class PdfService {
                             mainAxisAlignment: pw.MainAxisAlignment.end,
                             children: [
                               pw.Text(
-                                'Tax (0.0%):',
+                                'Subtotal:',
                                 style: pw.TextStyle(
                                   font: font,
                                   fontWeight: pw.FontWeight.bold,
@@ -308,17 +424,41 @@ class PdfService {
                               ),
                               pw.SizedBox(width: 20),
                               pw.Text(
-                                'USD 0.00',
+                                _formatCurrency(amount),
                                 style: pw.TextStyle(font: font),
                               ),
                             ],
                           ),
+                          if (paidAmount > 0) ...[
+                            pw.SizedBox(height: 5),
+                            pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.end,
+                              children: [
+                                pw.Text(
+                                  'Paid Amount:',
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: PdfColors.green800,
+                                  ),
+                                ),
+                                pw.SizedBox(width: 20),
+                                pw.Text(
+                                  _formatCurrency(paidAmount),
+                                  style: pw.TextStyle(
+                                    font: font,
+                                    color: PdfColors.green800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           pw.Divider(color: PdfColors.grey400),
                           pw.Row(
                             mainAxisAlignment: pw.MainAxisAlignment.end,
                             children: [
                               pw.Text(
-                                'Total:',
+                                'Balance Due:',
                                 style: pw.TextStyle(
                                   font: font,
                                   fontSize: 14,
@@ -327,7 +467,7 @@ class PdfService {
                               ),
                               pw.SizedBox(width: 20),
                               pw.Text(
-                                _formatCurrency(amount),
+                                _formatCurrency(amount - paidAmount),
                                 style: pw.TextStyle(
                                   font: font,
                                   fontSize: 14,
@@ -404,7 +544,7 @@ class PdfService {
                               ),
                             ),
                             pw.Text(
-                              authorizedName, // Use the dynamic authorized name here
+                              authorizedName,
                               style: pw.TextStyle(
                                 font: font,
                                 fontSize: 10,
